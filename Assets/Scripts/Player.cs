@@ -5,28 +5,30 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
 
+    private Transform cameraFollow;
     private Rigidbody rb;
-
     public float MoveSpeed;
     public float jumpForce;
     private bool jumpBool = false;
     bool space = false;
     private bool Grounded = true;
     private Animator anim;
-
+    public int coins;
     private bool Crouching = false;
 
     Vector3 rotation;
 
-    private bool WallJumpBool = false;
 
+    public Transform WallRayDetector;
+    private bool WallJumpBool = false;
+    public GameObject pillow;
+    public GameObject pillowspawn;
 
     void Start()
     {
+        cameraFollow = GameObject.FindGameObjectWithTag("Camera").transform;
         rb = GetComponent<Rigidbody>();
-
         anim = transform.GetChild(0).GetComponent<Animator>();
-
     }
 
 
@@ -34,19 +36,18 @@ public class Player : MonoBehaviour
     {
         move();
         jump();
-
+        WallJump();
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            jumpBool = true;
-        }
+        Cappy();
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
             space = true;
+            jumpBool = true;
+
         }
         if (Input.GetKeyUp(KeyCode.Space))
         {
@@ -128,9 +129,64 @@ public class Player : MonoBehaviour
         }
     }
 
+    void Cappy()
+    {
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            Instantiate(pillow, pillowspawn.transform.position, new Quaternion(0,0,0,0));
+        }
+    }
+
+    void WallJump()
+    {
+
+        //used to detect if player facing wall
+        Ray wall = new Ray(WallRayDetector.transform.position, WallRayDetector.transform.forward); //raycasr
+        RaycastHit hit;
+
+        //used to see if player is off the ground, before walljumping
+        RaycastHit hitdown; //declare a raycast hit detector
+        Ray downRay = new Ray(transform.position, -Vector3.up); //shoot a raycast downward
+        Physics.Raycast(downRay, out hitdown); //tells unity if the downray hit something, and transfers result into hitdown.
+
+        bool offground = false;
+        offground = hitdown.distance > 0.2f;
+
+        if (Physics.Raycast(wall, out hit, 0.7f) && hit.normal.y < 0.05 && offground && rb.velocity.y <= 0) //use a layer mask if you have triggers around the course
+        {
+            rb.drag = 5;
+            WallJumpBool = true;
+            anim.SetBool("WallJump", true);
+
+
+            anim.SetBool("Jump", false);
 
 
 
+            if (!Grounded && Physics.Raycast(wall, out hit, 0.7f) && hit.normal.y < 0.2 && space)
+            {
+                space = false;
+                WallJumpBool = true;
+                transform.eulerAngles += new Vector3(0, 180, 0);//face the opposite direction of the wall
+                rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);//set to 0 and then change on next line, so we always stabilize the vlelocity increase
+                rb.velocity = new Vector3(hit.normal.x * 8, rb.velocity.y + 20, hit.normal.z * 7); //bounce off to direction of normal
+
+
+                anim.SetBool("WallJump", false);
+                anim.SetBool("Jump", true);
+
+            }
+        }
+        else
+        {
+            anim.SetBool("WallJump", false);
+            rb.drag = 0;
+        }
+
+
+
+
+    }
     private void OnCollisionStay(Collision collision)
     {
         if (collision.contacts[0].normal.y > 0.5 && !Input.GetKey(KeyCode.Space))

@@ -27,10 +27,14 @@ public class Coin : MonoBehaviour
             if (other.GetComponent<Player>().coins >= 3)
             {
                 wintext.text = "You Win !";
+                Invoke("Close", 3);
             }
 
             Destroy(gameObject);
         }
     }
-
+    void Close()
+    {
+        Application.Quit();
+    }
 }

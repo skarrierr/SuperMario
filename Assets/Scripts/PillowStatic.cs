@@ -18,11 +18,15 @@ public class PillowStatic : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "Player")
+       
+    }
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.tag == "Player")
         {
-            other.transform.GetComponent<Rigidbody>().AddForce(new Vector3(2000, 50, 0), ForceMode.Impulse);
+            collision.transform.GetComponent<Rigidbody>().AddForce(new Vector3(100, 50, 0), ForceMode.Impulse);
 
-            Destroy(this.gameObject);
+            //Destroy(this.gameObject);
         }
     }
 }
